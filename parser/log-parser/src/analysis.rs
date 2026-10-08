@@ -1,4 +1,4 @@
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct AnalysisResult {
     pub total: u64,
     pub errors: u64,

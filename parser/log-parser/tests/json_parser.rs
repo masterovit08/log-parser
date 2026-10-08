@@ -1,31 +1,32 @@
 #[allow(unused_imports, unused)]
 
 use std::{fs::File, io::{BufRead, BufReader}};
-use log_parser::{JsonParser, LogEntry, LogLevel::{Debug, Info, Warn, Error, Fatal}, LogParser, Aggregator};
+use log_parser::{analyze, JsonParser, FileAnalysis, AnalysisResult};
 
 #[test]
-fn parse_jsonl() {
+fn parse_jsonl() -> Result<(), Box<dyn std::error::Error>> {
     let file = File::open("tests/artifacts/sample-ndjson.jsonl").expect("Unable to open artifact");
     let reader = BufReader::new(file);
     let parser = JsonParser;
-    let mut aggregator = Aggregator::default();
-    let mut entries = Vec::new();
+    let result = analyze(reader, &parser)?;
 
-    for line in reader.lines() {
-        let line = line.expect("Unable to read line");
+    //println!("{:#?}", result);
 
-        match parser.parse_line(&line) {
-            Ok(entry) => {
-                aggregator.process(&entry);
-                entries.push(entry);
-            },
-            Err(err) => eprintln!("{}", err)
-        }
-    }
+    assert_eq!(result, FileAnalysis {
+        result: AnalysisResult {
+            total: 50,
+            errors: 19,
+            http_2xx: 36,
+            http_4xx: 7,
+            http_5xx: 7,
+            total_duration_ms: 5815.859999999999,
+            duration_count: 50,
+        },
+        total_lines: 50,
+        parsed_lines: 50,
+        failed_lines: 0,
+        errors: vec![],
+    });
 
-    println!("{:#?}", aggregator.result());
-
-    assert_eq!(entries.len(), 50);
-    assert_eq!(entries[0], LogEntry { timestamp: Some(String::from("2026-01-15T09:00:05Z")), level: Some(Info), service: Some(String::from("api")), message: String::from(""), method: None, path: None, status_code: Some(200), duration_ms: Some(35.31), request_id: Some(String::from("req-46048")), raw: String::from("{\"timestamp\": \"2026-01-15T09:00:05Z\", \"level\": \"INFO\", \"service\": \"api\", \"request_id\": \"req-46048\", \"user_id\": 251, \"action\": \"logout\", \"duration_ms\": 35.31, \"status\": 200}") });
-    assert_eq!(entries[1], LogEntry { timestamp: Some(String::from("2026-01-15T09:00:08Z")), level: Some(Info), service: Some(String::from("db")), message: String::from(""), method: None, path: None, status_code: Some(201), duration_ms: Some(23.88), request_id: Some(String::from("req-65302")), raw: String::from("{\"timestamp\": \"2026-01-15T09:00:08Z\", \"level\": \"INFO\", \"service\": \"db\", \"request_id\": \"req-65302\", \"user_id\": 33, \"action\": \"login\", \"duration_ms\": 23.88, \"status\": 201}") });
+    Ok(())
 }

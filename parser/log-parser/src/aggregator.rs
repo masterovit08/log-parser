@@ -30,4 +30,5 @@ impl Aggregator {
     pub fn result(&self) -> &AnalysisResult {
         &self.result
     }
+    pub fn finish(&self) -> AnalysisResult { self.result }
 }
