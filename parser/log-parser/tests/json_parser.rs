@@ -1,11 +1,9 @@
-#[allow(unused_imports, unused)]
-
-use std::{fs::File, io::{BufRead, BufReader}};
-use log_parser::{analyze, JsonParser, FileAnalysis, AnalysisResult, LogParser, LogEntry, LogLevel};
+use std::{fs::File, io::BufReader};
+use log_parser::{analyze, FileAnalysis, AnalysisResult, LogEntry, LogLevel, parser, LogType};
 
 #[test]
 fn parse_jsonl_line() -> Result<(), Box<dyn std::error::Error>> {
-    let parser = JsonParser;
+    let parser = parser(LogType::JsonLines)?;
     let line = "{\"timestamp\": \"2026-01-15T09:00:05Z\", \"level\": \"INFO\", \"service\": \"api\", \"request_id\": \"req-46048\", \"user_id\": 251, \"action\": \"logout\", \"duration_ms\": 35.31, \"status\": 200}";
     let result = parser.parse_line(line)?;
 
@@ -45,8 +43,8 @@ fn parse_jsonl_line() -> Result<(), Box<dyn std::error::Error>> {
 fn parse_jsonl() -> Result<(), Box<dyn std::error::Error>> {
     let file = File::open("tests/artifacts/sample-ndjson.jsonl").expect("Unable to open artifact");
     let reader = BufReader::new(file);
-    let parser = JsonParser;
-    let result = analyze(reader, &parser)?;
+    let parser = parser(LogType::JsonLines)?;
+    let result = analyze(reader, parser.as_ref())?;
 
     //println!("{:#?}", result);
 

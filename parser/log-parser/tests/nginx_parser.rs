@@ -1,10 +1,10 @@
 use std::fs::File;
 use std::io::BufReader;
-use log_parser::{NginxCombinedParser, analyze, FileAnalysis, AnalysisResult, LineError, LogParser, LogEntry};
+use log_parser::{analyze, FileAnalysis, AnalysisResult, LineError, LogEntry, parser, LogType};
 
 #[test]
 fn parse_nginx_combined_line() -> Result<(), Box<dyn std::error::Error>> {
-    let parser = NginxCombinedParser::new();
+    let parser = parser(LogType::NginxCombined)?;
     let line = "192.168.1.10 - - [10/Oct/2026:12:30:45 +0000] \"GET /api/users HTTP/1.1\" 200 1543 \"-\" \"Mozilla/5.0\"";
     let result = parser.parse_line(line)?;
 
@@ -40,11 +40,11 @@ fn parse_nginx_combined_line() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn parse_nginx_combined() -> Result<(), Box<dyn std::error::Error>>{
-    let parser = NginxCombinedParser::new();
+    let parser = parser(LogType::NginxCombined)?;
 
     let file = File::open("tests/artifacts/nginx_access.log").expect("Unable to open artifact");
     let reader = BufReader::new(file);
-    let result = analyze(reader, &parser)?;
+    let result = analyze(reader, parser.as_ref())?;
 
     //println!("{:#?}", result);
 

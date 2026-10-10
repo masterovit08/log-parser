@@ -10,4 +10,7 @@ pub enum ParseError {
 
     #[error("invalid nginx timestamp: {0}")]
     InvalidTimestamp(#[from] chrono::ParseError),
+
+    #[error("unsupported log format")]
+    UnsupportedFormat,
 }
