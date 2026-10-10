@@ -14,4 +14,5 @@ pub use analyzer::{analyze, FileAnalysis, LineError};
 
 pub use parsers::{
     json::JsonParser,
+    nginx::NginxCombinedParser
 };

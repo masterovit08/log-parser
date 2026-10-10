@@ -23,8 +23,10 @@ impl Aggregator {
             _ => {}
         }
 
-        self.result.total_duration_ms += entry.duration_ms.unwrap();
-        self.result.duration_count += 1;
+        if let Some(duration_ms) = entry.duration_ms {
+            self.result.total_duration_ms += duration_ms;
+            self.result.duration_count += 1;
+        }
     }
 
     pub fn result(&self) -> &AnalysisResult {

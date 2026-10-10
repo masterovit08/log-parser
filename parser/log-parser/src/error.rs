@@ -6,5 +6,8 @@ pub enum ParseError {
     InvalidJson(#[from] serde_json::Error),
 
     #[error("invalid log format")]
-    InvalidFormat
+    InvalidFormat,
+
+    #[error("invalid nginx timestamp: {0}")]
+    InvalidTimestamp(#[from] chrono::ParseError),
 }
