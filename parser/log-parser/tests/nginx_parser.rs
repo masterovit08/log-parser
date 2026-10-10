@@ -1,12 +1,42 @@
 use std::fs::File;
 use std::io::BufReader;
-use log_parser::{
-    NginxCombinedParser,
-    analyze,
-    FileAnalysis,
-    AnalysisResult,
-    LineError
-};
+use log_parser::{NginxCombinedParser, analyze, FileAnalysis, AnalysisResult, LineError, LogParser, LogEntry};
+
+#[test]
+fn parse_nginx_combined_line() -> Result<(), Box<dyn std::error::Error>> {
+    let parser = NginxCombinedParser::new();
+    let line = "192.168.1.10 - - [10/Oct/2026:12:30:45 +0000] \"GET /api/users HTTP/1.1\" 200 1543 \"-\" \"Mozilla/5.0\"";
+    let result = parser.parse_line(line)?;
+
+    //println!("{:#?}", result);
+
+    assert_eq!(result,
+               LogEntry {
+                   timestamp: Some(
+                       "2026-10-10T12:30:45+00:00".to_owned(),
+                   ),
+                   level: None,
+                   service: Some(
+                       "nginx".to_owned(),
+                   ),
+                   message: "GET /api/users HTTP/1.1".to_owned(),
+                   method: Some(
+                       "GET".to_owned(),
+                   ),
+                   path: Some(
+                       "/api/users".to_owned(),
+                   ),
+                   status_code: Some(
+                       200,
+                   ),
+                   duration_ms: None,
+                   request_id: None,
+                   raw: "192.168.1.10 - - [10/Oct/2026:12:30:45 +0000] \"GET /api/users HTTP/1.1\" 200 1543 \"-\" \"Mozilla/5.0\"".to_owned(),
+               }
+    );
+
+    Ok(())
+}
 
 #[test]
 fn parse_nginx_combined() -> Result<(), Box<dyn std::error::Error>>{

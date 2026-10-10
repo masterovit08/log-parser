@@ -1,7 +1,45 @@
 #[allow(unused_imports, unused)]
 
 use std::{fs::File, io::{BufRead, BufReader}};
-use log_parser::{analyze, JsonParser, FileAnalysis, AnalysisResult};
+use log_parser::{analyze, JsonParser, FileAnalysis, AnalysisResult, LogParser, LogEntry, LogLevel};
+
+#[test]
+fn parse_jsonl_line() -> Result<(), Box<dyn std::error::Error>> {
+    let parser = JsonParser;
+    let line = "{\"timestamp\": \"2026-01-15T09:00:05Z\", \"level\": \"INFO\", \"service\": \"api\", \"request_id\": \"req-46048\", \"user_id\": 251, \"action\": \"logout\", \"duration_ms\": 35.31, \"status\": 200}";
+    let result = parser.parse_line(line)?;
+
+    //println!("result: {:#?}", result);
+
+    assert_eq!(result,
+               LogEntry {
+                   timestamp: Some(
+                       "2026-01-15T09:00:05Z".to_owned(),
+                   ),
+                   level: Some(
+                       LogLevel::Info,
+                   ),
+                   service: Some(
+                       "api".to_owned(),
+                   ),
+                   message: "".to_owned(),
+                   method: None,
+                   path: None,
+                   status_code: Some(
+                       200,
+                   ),
+                   duration_ms: Some(
+                       35.31,
+                   ),
+                   request_id: Some(
+                       "req-46048".to_owned(),
+                   ),
+                   raw: "{\"timestamp\": \"2026-01-15T09:00:05Z\", \"level\": \"INFO\", \"service\": \"api\", \"request_id\": \"req-46048\", \"user_id\": 251, \"action\": \"logout\", \"duration_ms\": 35.31, \"status\": 200}".to_owned(),
+               }
+    );
+
+    Ok(())
+}
 
 #[test]
 fn parse_jsonl() -> Result<(), Box<dyn std::error::Error>> {
