@@ -1,0 +1,16 @@
+[package]
+name = "cli"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[[bin]]
+name = "log-parser"
+path = "src/main.rs"
+
+[dependencies]
+log-parser.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+colored.workspace = true
+

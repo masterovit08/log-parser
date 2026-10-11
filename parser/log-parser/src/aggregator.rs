@@ -19,7 +19,7 @@ impl Aggregator {
         match entry.status_code {
             Some(200..=299) => self.result.http_2xx += 1,
             Some(400..=499) => self.result.http_4xx += 1,
-            Some(500..=599) => { self.result.http_5xx += 1; self.result.errors += 1; },
+            Some(500..=599) => { self.result.http_5xx += 1; },
             _ => {}
         }
 
