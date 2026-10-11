@@ -1,6 +1,16 @@
 [package]
 name = "worker"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+publish = false
 
 [dependencies]
+log-parser.workspace = true
+job-model.workspace = true
+
+tokio.workspace = true
+redis.workspace = true
+uuid.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

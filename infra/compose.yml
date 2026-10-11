@@ -1,0 +1,29 @@
+name: log-parser
+
+services:
+  redis:
+    image: redis:8-alpine
+    container_name: log-parser-redis
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+
+    ports:
+      - "127.0.0.1:6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.100.0/24
+
+volumes:
+  redis_data:

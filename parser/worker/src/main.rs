@@ -1,3 +1,37 @@
-fn main() {
-    println!("Hello, world!");
+pub mod queue;
+mod worker;
+
+use anyhow::Result;
+use queue::redis::RedisQueue;
+use tracing::{error, info};
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
+
+    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+    let worker_id = std::env::var("WORKER_ID").unwrap_or_else(|_| "worker-1".to_string());
+    let mut queue = RedisQueue::connect(&redis_url, &worker_id).await?;
+
+    info!(worker = %worker_id, "Worker started");
+
+    loop {
+        let Some(job) = queue.next().await? else {
+            continue;
+        };
+
+        info!(job_id = %job.job_id, "Job received");
+
+        match worker::handle_job(&job.job_id).await {
+            Ok(()) => {
+                queue.ack(&job.message_id).await?;
+
+                info!(job_id = %job.job_id, "Job acknowledged");
+            }
+
+            Err(error) => {
+                error!(job_id = %job.job_id, %error, "Job failed");
+            }
+        }
+    }
 }
