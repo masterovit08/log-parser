@@ -1,7 +1,7 @@
 use worker::RedisQueue;
 
 use anyhow::Context;
-use redis::{streams::StreamPendingReply, AsyncCommands};
+use redis::{AsyncCommands, streams::StreamPendingReply};
 use uuid::Uuid;
 
 #[tokio::test]
@@ -15,8 +15,12 @@ async fn test_redis() -> anyhow::Result<()> {
     let client = redis::Client::open(url.as_str())?;
     let mut connection = client.get_multiplexed_async_connection().await?;
 
-    let _: () = connection.xgroup_create_mkstream(&stream, group, "0").await?;
-    let _: String = connection.xadd(&stream, "*", &[("job_id", job_id.as_str())]).await?;
+    let _: () = connection
+        .xgroup_create_mkstream(&stream, group, "0")
+        .await?;
+    let _: String = connection
+        .xadd(&stream, "*", &[("job_id", job_id.as_str())])
+        .await?;
     let mut queue = RedisQueue::connect_named(&url, "test-worker", &stream, group).await?;
 
     let received = queue.next().await?.context("No job received")?;

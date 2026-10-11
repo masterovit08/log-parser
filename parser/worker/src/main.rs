@@ -1,15 +1,15 @@
-
 mod handler;
 
 use anyhow::Result;
-use worker::RedisQueue;
 use tracing::{error, info};
+use worker::RedisQueue;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
 
-    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+    let redis_url =
+        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
     let worker_id = std::env::var("WORKER_ID").unwrap_or_else(|_| "worker-1".to_string());
     let mut queue = RedisQueue::connect(&redis_url, &worker_id).await?;
 

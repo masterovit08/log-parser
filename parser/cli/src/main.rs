@@ -4,16 +4,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
-use anyhow::{Result, Context};
-use log_parser::{analyze, parser, LogType};
 use colored::Colorize;
+use log_parser::{LogType, analyze, parser};
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Analyze{file, format} => {
+        Commands::Analyze { file, format } => {
             run_analysis(&file, format)?;
         }
     }
@@ -22,7 +22,8 @@ fn main() -> Result<()> {
 }
 
 fn run_analysis(path: &Path, format: InputType) -> Result<()> {
-    let file = File::open(path).with_context(|| format!("Could not open file {:?}", path.display()))?;
+    let file =
+        File::open(path).with_context(|| format!("Could not open file {:?}", path.display()))?;
     let reader = BufReader::new(file);
 
     let parser = parser(format.into()).context("Could not parse file")?;
@@ -36,12 +37,24 @@ fn run_analysis(path: &Path, format: InputType) -> Result<()> {
     println!();
 
     println!("{} {}", "Total lines:".bold(), result.total_lines);
-    println!("{} {}", "Parsed lines:".bold(), result.parsed_lines.to_string().green());
+    println!(
+        "{} {}",
+        "Parsed lines:".bold(),
+        result.parsed_lines.to_string().green()
+    );
 
     if result.failed_lines > 0 {
-        println!("{} {}", "Failed lines:".bold(), result.failed_lines.to_string().red());
+        println!(
+            "{} {}",
+            "Failed lines:".bold(),
+            result.failed_lines.to_string().red()
+        );
     } else {
-        println!("{} {}", "Failed lines:".bold(), result.failed_lines.to_string().green());
+        println!(
+            "{} {}",
+            "Failed lines:".bold(),
+            result.failed_lines.to_string().green()
+        );
     }
 
     println!();
@@ -49,7 +62,11 @@ fn run_analysis(path: &Path, format: InputType) -> Result<()> {
     if stat.errors > 0 {
         println!("{} {}", "Log errors:".bold(), stat.errors.to_string().red());
     } else {
-        println!("{} {}", "Log errors:".bold(), stat.errors.to_string().green());
+        println!(
+            "{} {}",
+            "Log errors:".bold(),
+            stat.errors.to_string().green()
+        );
     }
 
     println!("HTTP 2xx: {}", stat.http_2xx.to_string().green());
@@ -81,7 +98,7 @@ fn run_analysis(path: &Path, format: InputType) -> Result<()> {
 #[command(about = "CLI for log-parser")]
 struct Cli {
     #[command(subcommand)]
-    command: Commands
+    command: Commands,
 }
 
 #[derive(Subcommand, Debug)]
@@ -93,14 +110,14 @@ enum Commands {
 
         /// Log format
         #[arg(long, short, value_enum)]
-        format: InputType
-    }
+        format: InputType,
+    },
 }
 
 #[derive(Debug, Copy, Clone, ValueEnum)]
 enum InputType {
     Jsonl,
-    Nginx
+    Nginx,
 }
 
 impl From<InputType> for LogType {

@@ -19,7 +19,7 @@ pub enum LogLevel {
     Info,
     Warn,
     Error,
-    Fatal
+    Fatal,
 }
 
 impl LogLevel {
@@ -31,7 +31,7 @@ impl LogLevel {
             "warn" | "warning" => Some(LogLevel::Warn),
             "error" | "err" => Some(LogLevel::Error),
             "fatal" | "critical" | "crit" => Some(LogLevel::Fatal),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -40,5 +40,5 @@ impl LogLevel {
 pub enum LogType {
     JsonLines,
     NginxCombined,
-    Syslog
+    Syslog,
 }

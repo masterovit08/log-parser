@@ -5,7 +5,7 @@ use crate::{
 
 #[derive(Debug, Default)]
 pub struct Aggregator {
-    pub result: AnalysisResult
+    pub result: AnalysisResult,
 }
 
 impl Aggregator {
@@ -19,7 +19,9 @@ impl Aggregator {
         match entry.status_code {
             Some(200..=299) => self.result.http_2xx += 1,
             Some(400..=499) => self.result.http_4xx += 1,
-            Some(500..=599) => { self.result.http_5xx += 1; },
+            Some(500..=599) => {
+                self.result.http_5xx += 1;
+            }
             _ => {}
         }
 
@@ -32,5 +34,7 @@ impl Aggregator {
     pub fn result(&self) -> &AnalysisResult {
         &self.result
     }
-    pub fn finish(&self) -> AnalysisResult { self.result }
+    pub fn finish(&self) -> AnalysisResult {
+        self.result
+    }
 }

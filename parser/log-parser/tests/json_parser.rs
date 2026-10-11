@@ -1,5 +1,5 @@
+use log_parser::{AnalysisResult, FileAnalysis, LogEntry, LogLevel, LogType, analyze, parser};
 use std::{fs::File, io::BufReader};
-use log_parser::{analyze, FileAnalysis, AnalysisResult, LogEntry, LogLevel, parser, LogType};
 
 #[test]
 fn parse_jsonl_line() -> Result<(), Box<dyn std::error::Error>> {
@@ -48,21 +48,24 @@ fn parse_jsonl() -> Result<(), Box<dyn std::error::Error>> {
 
     //println!("{:#?}", result);
 
-    assert_eq!(result, FileAnalysis {
-        result: AnalysisResult {
-            total: 50,
-            errors: 12,
-            http_2xx: 36,
-            http_4xx: 7,
-            http_5xx: 7,
-            total_duration_ms: 5815.859999999999,
-            duration_count: 50,
-        },
-        total_lines: 50,
-        parsed_lines: 50,
-        failed_lines: 0,
-        errors: vec![],
-    });
+    assert_eq!(
+        result,
+        FileAnalysis {
+            result: AnalysisResult {
+                total: 50,
+                errors: 12,
+                http_2xx: 36,
+                http_4xx: 7,
+                http_5xx: 7,
+                total_duration_ms: 5815.859999999999,
+                duration_count: 50,
+            },
+            total_lines: 50,
+            parsed_lines: 50,
+            failed_lines: 0,
+            errors: vec![],
+        }
+    );
 
     Ok(())
 }

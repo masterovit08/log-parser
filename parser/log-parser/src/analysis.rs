@@ -8,7 +8,7 @@ pub struct AnalysisResult {
     pub http_5xx: u64,
 
     pub total_duration_ms: f64,
-    pub duration_count: u64
+    pub duration_count: u64,
 }
 
 impl AnalysisResult {

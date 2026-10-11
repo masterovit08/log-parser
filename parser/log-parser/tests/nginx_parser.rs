@@ -1,6 +1,6 @@
+use log_parser::{AnalysisResult, FileAnalysis, LineError, LogEntry, LogType, analyze, parser};
 use std::fs::File;
 use std::io::BufReader;
-use log_parser::{analyze, FileAnalysis, AnalysisResult, LineError, LogEntry, parser, LogType};
 
 #[test]
 fn parse_nginx_combined_line() -> Result<(), Box<dyn std::error::Error>> {
@@ -39,7 +39,7 @@ fn parse_nginx_combined_line() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn parse_nginx_combined() -> Result<(), Box<dyn std::error::Error>>{
+fn parse_nginx_combined() -> Result<(), Box<dyn std::error::Error>> {
     let parser = parser(LogType::NginxCombined)?;
 
     let file = File::open("tests/artifacts/nginx_access.log").expect("Unable to open artifact");
@@ -48,27 +48,26 @@ fn parse_nginx_combined() -> Result<(), Box<dyn std::error::Error>>{
 
     //println!("{:#?}", result);
 
-    assert_eq!(result,
-               FileAnalysis {
-                   result: AnalysisResult {
-                       total: 3,
-                       errors: 0,
-                       http_2xx: 1,
-                       http_4xx: 1,
-                       http_5xx: 1,
-                       total_duration_ms: 0.0,
-                       duration_count: 0,
-                   },
-                   total_lines: 4,
-                   parsed_lines: 3,
-                   failed_lines: 1,
-                   errors: vec![
-                       LineError {
-                           line: 4,
-                           message: "invalid log format".to_owned(),
-                       },
-                   ],
-               }
+    assert_eq!(
+        result,
+        FileAnalysis {
+            result: AnalysisResult {
+                total: 3,
+                errors: 0,
+                http_2xx: 1,
+                http_4xx: 1,
+                http_5xx: 1,
+                total_duration_ms: 0.0,
+                duration_count: 0,
+            },
+            total_lines: 4,
+            parsed_lines: 3,
+            failed_lines: 1,
+            errors: vec![LineError {
+                line: 4,
+                message: "invalid log format".to_owned(),
+            },],
+        }
     );
 
     Ok(())

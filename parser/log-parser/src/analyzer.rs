@@ -1,5 +1,5 @@
-use std::io::{self, BufRead};
 use crate::{aggregator::Aggregator, analysis::AnalysisResult, parsers::LogParser};
+use std::io::{self, BufRead};
 
 #[derive(Debug, PartialEq)]
 pub struct LineError {
@@ -13,7 +13,7 @@ pub struct FileAnalysis {
     pub total_lines: u64,
     pub parsed_lines: u64,
     pub failed_lines: u64,
-    pub errors: Vec<LineError>
+    pub errors: Vec<LineError>,
 }
 
 pub fn analyze<R: BufRead>(reader: R, parser: &dyn LogParser) -> io::Result<FileAnalysis> {
@@ -40,9 +40,9 @@ pub fn analyze<R: BufRead>(reader: R, parser: &dyn LogParser) -> io::Result<File
                 failed_lines += 1;
 
                 if errors.len() < 20 {
-                    errors.push(LineError{
+                    errors.push(LineError {
                         line: index + 1,
-                        message: error.to_string()
+                        message: error.to_string(),
                     })
                 }
             }
@@ -54,6 +54,6 @@ pub fn analyze<R: BufRead>(reader: R, parser: &dyn LogParser) -> io::Result<File
         total_lines,
         parsed_lines,
         failed_lines,
-        errors
+        errors,
     })
 }
