@@ -29,8 +29,14 @@ jobs:
         with:
           workspaces: parser -> target
 
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
       - name: Unit tests
-        run: cargo test --workspace --locked
+        run: cargo test --workspace --lib --bins --locked
 
   redis-integration:
     name: Redis integration

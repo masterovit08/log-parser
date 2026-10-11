@@ -53,7 +53,7 @@ impl RedisQueue {
     pub async fn ack(&mut self, message_id: &str) -> Result<()> {
         let acknowledged: bool = self.connection.xack(&self.stream, &self.group, &[message_id]).await?;
 
-        if acknowledged != true {
+        if !acknowledged {
             anyhow::bail!("message wasn't acknowledged");
         }
 

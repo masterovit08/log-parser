@@ -22,9 +22,15 @@ impl NginxCombinedParser {
             r#""(?P<agent>(?:\\.|[^"\\])*)"$"#,
         );
 
-        let regex = Regex::new(&pattern).expect("Invalid nginx combined regex");
+        let regex = Regex::new(pattern).expect("Invalid nginx combined regex");
 
         Self { regex }
+    }
+}
+
+impl Default for NginxCombinedParser {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

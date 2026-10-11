@@ -10,7 +10,7 @@ use log_parser::{analyze, parser, LogType};
 use colored::Colorize;
 
 fn main() -> Result<()> {
-    let cli = CLI::parse();
+    let cli = Cli::parse();
 
     match cli.command {
         Commands::Analyze{file, format} => {
@@ -52,15 +52,15 @@ fn run_analysis(path: &Path, format: InputType) -> Result<()> {
         println!("{} {}", "Log errors:".bold(), stat.errors.to_string().green());
     }
 
-    println!("{} {}", "HTTP 2xx:", stat.http_2xx.to_string().green());
-    println!("{} {}", "HTTP 4xx:", stat.http_4xx.to_string().yellow());
-    println!("{} {}", "HTTP 5xx:", stat.http_5xx.to_string().red());
+    println!("HTTP 2xx: {}", stat.http_2xx.to_string().green());
+    println!("HTTP 4xx: {}", stat.http_4xx.to_string().yellow());
+    println!("HTTP 5xx: {}", stat.http_5xx.to_string().red());
 
     if stat.duration_count > 0 {
         let average = stat.total_duration_ms / stat.duration_count as f64;
         println!("{} {:.2}", "Average duration:".bold(), average);
     } else {
-        println!("{} {}", "Average duration:".bold(), "N/A");
+        println!("{} N/A", "Average duration:".bold());
     }
 
     if !result.errors.is_empty() {
@@ -79,7 +79,7 @@ fn run_analysis(path: &Path, format: InputType) -> Result<()> {
 #[command(name = "log-parser")]
 #[command(version)]
 #[command(about = "CLI for log-parser")]
-struct CLI {
+struct Cli {
     #[command(subcommand)]
     command: Commands
 }
