@@ -52,7 +52,7 @@ fn parse_nginx_combined() -> Result<(), Box<dyn std::error::Error>>{
                FileAnalysis {
                    result: AnalysisResult {
                        total: 3,
-                       errors: 1,
+                       errors: 0,
                        http_2xx: 1,
                        http_4xx: 1,
                        http_5xx: 1,

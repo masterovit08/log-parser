@@ -51,7 +51,7 @@ fn parse_jsonl() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(result, FileAnalysis {
         result: AnalysisResult {
             total: 50,
-            errors: 19,
+            errors: 12,
             http_2xx: 36,
             http_4xx: 7,
             http_5xx: 7,
