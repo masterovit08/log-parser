@@ -15,7 +15,7 @@ pub struct RedisQueue {
 }
 
 impl RedisQueue {
-    pub async fn connect(url: &str, consumer: &str) -> Result<Self> {
+    pub async fn connect_named(url: &str, consumer: &str, stream: &str, group: &str) -> Result<Self> {
         let client = redis::Client::open(url)?;
         let config = AsyncConnectionConfig::new()
             .set_connection_timeout(Some(Duration::from_secs(5)))
@@ -25,10 +25,13 @@ impl RedisQueue {
 
         Ok(Self {
             connection,
-            stream: "log-parser:jobs".into(),
-            group: "log-parser-workers".into(),
-            consumer: consumer.into(),
+            stream: stream.to_owned(),
+            group: group.to_owned(),
+            consumer: consumer.to_owned(),
         })
+    }
+    pub async fn connect(url: &str, consumer: &str) -> Result<Self> {
+        Self::connect_named(url, consumer, "log-parser:jobs", "log-parser-workers").await
     }
 
     pub async fn next(&mut self) -> Result<Option<QueuedJob>> {

@@ -1,8 +1,8 @@
-pub mod queue;
-mod worker;
+
+mod handler;
 
 use anyhow::Result;
-use queue::redis::RedisQueue;
+use worker::RedisQueue;
 use tracing::{error, info};
 
 #[tokio::main]
@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
 
         info!(job_id = %job.job_id, "Job received");
 
-        match worker::handle_job(&job.job_id).await {
+        match handler::handle_job(&job.job_id).await {
             Ok(()) => {
                 queue.ack(&job.message_id).await?;
 
