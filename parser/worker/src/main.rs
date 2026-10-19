@@ -1,8 +1,8 @@
 mod handler;
 
-use anyhow::Result;
+use anyhow::{Result, Context};
 use tracing::{error, info};
-use worker::RedisQueue;
+use worker::{RedisQueue, connect};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -12,6 +12,11 @@ async fn main() -> Result<()> {
         std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
     let worker_id = std::env::var("WORKER_ID").unwrap_or_else(|_| "worker-1".to_string());
     let mut queue = RedisQueue::connect(&redis_url, &worker_id).await?;
+    info!("Connected to Redis");
+
+    let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL not set")?;
+    let _db_pool = connect(&database_url).await.context("Failed to connect to database")?;
+    info!("Connected to PostgreSQL");
 
     info!(worker = %worker_id, "Worker started");
 
