@@ -1,5 +1,5 @@
-pub mod queue;
 pub mod db;
+pub mod queue;
 
-pub use queue::redis::{QueuedJob, RedisQueue};
 pub use db::{connect, jobs::claim};
+pub use queue::redis::{QueuedJob, RedisQueue};

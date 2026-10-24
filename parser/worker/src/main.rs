@@ -1,9 +1,9 @@
 mod handler;
 
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use tracing::{error, info};
-use worker::{RedisQueue, connect, claim};
 use uuid::Uuid;
+use worker::{RedisQueue, claim, connect};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -16,7 +16,9 @@ async fn main() -> Result<()> {
     info!("Connected to Redis");
 
     let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL not set")?;
-    let db_pool = connect(&database_url).await.context("Failed to connect to database")?;
+    let db_pool = connect(&database_url)
+        .await
+        .context("Failed to connect to database")?;
     info!("Connected to PostgreSQL");
 
     info!(worker = %worker_id, "Worker started");
