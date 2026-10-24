@@ -2,7 +2,8 @@ mod handler;
 
 use anyhow::{Result, Context};
 use tracing::{error, info};
-use worker::{RedisQueue, connect};
+use worker::{RedisQueue, connect, claim};
+use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -15,7 +16,7 @@ async fn main() -> Result<()> {
     info!("Connected to Redis");
 
     let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL not set")?;
-    let _db_pool = connect(&database_url).await.context("Failed to connect to database")?;
+    let db_pool = connect(&database_url).await.context("Failed to connect to database")?;
     info!("Connected to PostgreSQL");
 
     info!(worker = %worker_id, "Worker started");
@@ -25,17 +26,33 @@ async fn main() -> Result<()> {
             continue;
         };
 
-        info!(job_id = %job.job_id, "Job received");
+        let job_id = job.job_id;
 
-        match handler::handle_job(&job.job_id).await {
+        info!(job_id = %job_id, "Job received");
+
+        match claim(&db_pool, Uuid::parse_str(&job_id)?).await {
+            Ok(true) => {
+                info!(job_id = %job_id, "Job status has been successfully changed")
+            }
+
+            Ok(false) => {
+                error!(job_id = %job_id, "Job has not been registered");
+            }
+
+            Err(_e) => {
+                error!(job_id = %job_id, "Failed to load job");
+            }
+        }
+
+        match handler::handle_job(&job_id).await {
             Ok(()) => {
                 queue.ack(&job.message_id).await?;
 
-                info!(job_id = %job.job_id, "Job acknowledged");
+                info!(job_id = %job_id, "Job acknowledged");
             }
 
             Err(error) => {
-                error!(job_id = %job.job_id, %error, "Job failed");
+                error!(job_id = %job_id, %error, "Job failed");
             }
         }
     }

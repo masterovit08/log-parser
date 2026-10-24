@@ -38,12 +38,13 @@ jobs:
       - name: Unit tests
         run: cargo test --workspace --lib --bins --locked
 
-  redis-integration:
-    name: Redis integration
+  integration:
+    name: Integration tests
     runs-on: ubuntu-latest
 
     env:
       REDIS_TEST_URL: redis://127.0.0.1:6380
+      DATABASE_TEST_URL: postgres://log-parser:log-parser_dev@127.0.0.1:5434/log-parser
 
     defaults:
       run:
@@ -64,22 +65,22 @@ jobs:
           docker compose -f infra/compose.yml config --quiet
           docker compose -f infra/compose.ci.yml config --quiet
 
-      - name: Start Redis
+      - name: Start Redis and Postgres
         working-directory: .
         run: |
           docker compose -f infra/compose.ci.yml up --wait --wait-timeout 60
 
-      - name: Run Redis integration test
+      - name: Run integration test
         run: |
-          cargo test -p worker test_redis --locked -- --ignored --nocapture
+          cargo test -p worker --test integration integration_test --locked -- --ignored --nocapture
 
-      - name: Print Redis logs on failure
+      - name: Print logs on failure
         if: failure()
         working-directory: .
         run: |
-          docker compose -f infra/compose.ci.yml logs --no-color redis
+          docker compose -f infra/compose.ci.yml logs --no-color redis postgres
 
-      - name: Stop Redis
+      - name: Stop
         if: always()
         working-directory: .
         run: |
