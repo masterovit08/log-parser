@@ -3,7 +3,7 @@ mod handler;
 use anyhow::{Context, Result};
 use tracing::{error, info};
 use uuid::Uuid;
-use worker::{RedisQueue, claim, connect};
+use worker::{RedisQueue, connect};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -15,7 +15,8 @@ async fn main() -> Result<()> {
     let mut queue = RedisQueue::connect(&redis_url, &worker_id).await?;
     info!("Connected to Redis");
 
-    let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL not set")?;
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://log-parser:log-parser_dev@127.0.0.1:5433".to_string());
     let db_pool = connect(&database_url)
         .await
         .context("Failed to connect to database")?;
@@ -32,21 +33,7 @@ async fn main() -> Result<()> {
 
         info!(job_id = %job_id, "Job received");
 
-        match claim(&db_pool, Uuid::parse_str(&job_id)?).await {
-            Ok(true) => {
-                info!(job_id = %job_id, "Job status has been successfully changed")
-            }
-
-            Ok(false) => {
-                error!(job_id = %job_id, "Job has not been registered");
-            }
-
-            Err(_e) => {
-                error!(job_id = %job_id, "Failed to load job");
-            }
-        }
-
-        match handler::handle_job(&job_id).await {
+        match handler::handle_job(&db_pool, Uuid::parse_str(&job_id)?).await {
             Ok(()) => {
                 queue.ack(&job.message_id).await?;
 
