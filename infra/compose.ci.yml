@@ -12,3 +12,23 @@ services:
       interval: 2s
       timeout: 2s
       retries: 15
+
+  postgres:
+    image: postgres:17-alpine
+
+    environment:
+      POSTGRES_USER: log-parser
+      POSTGRES_PASSWORD: log-parser_dev
+      POSTGRES_DB: log-parser
+
+    ports:
+      - "127.0.0.1:5434:5432"
+
+    tmpfs:
+      - /var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U log-parser -d log-parser"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
