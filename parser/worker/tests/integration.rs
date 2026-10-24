@@ -1,8 +1,8 @@
-use std::env;
 use anyhow::Context;
-use uuid::Uuid;
-use worker::{connect, claim, RedisQueue};
 use redis::{AsyncCommands, streams::StreamPendingReply};
+use std::env;
+use uuid::Uuid;
+use worker::{RedisQueue, claim, connect};
 
 #[tokio::test]
 #[ignore = "requires a running Redis and PostgreSQL nstance"]
@@ -16,7 +16,10 @@ pub async fn integration_test() -> anyhow::Result<()> {
 
     let db_pool = connect(&db_url).await.context("failed to connect to db")?;
     let redis_client = redis::Client::open(redis_url.as_str())?;
-    let mut redis_connection = redis_client.get_multiplexed_async_connection().await.context("failed to get redis connection")?;
+    let mut redis_connection = redis_client
+        .get_multiplexed_async_connection()
+        .await
+        .context("failed to get redis connection")?;
 
     sqlx::query(
         r#"
@@ -29,14 +32,19 @@ pub async fn integration_test() -> anyhow::Result<()> {
                 created_at  timestamp with time zone default now()                       not null,
                 started_at  timestamp with time zone,
                 finished_at timestamp with time zone
-            );"#
-    ).execute(&db_pool).await?;
+            );"#,
+    )
+    .execute(&db_pool)
+    .await?;
 
     let test_minio_key = format!("raw-logs/{}.log", job_id);
 
-    sqlx::query(
-        "INSERT INTO jobs (id, status, minio_key) VALUES ($1, $2, $3)"
-    ).bind(&job_id_uuid).bind("queued").bind(&test_minio_key).execute(&db_pool).await?;
+    sqlx::query("INSERT INTO jobs (id, status, minio_key) VALUES ($1, $2, $3)")
+        .bind(job_id_uuid)
+        .bind("queued")
+        .bind(&test_minio_key)
+        .execute(&db_pool)
+        .await?;
 
     let _: () = redis_connection
         .xgroup_create_mkstream(&stream, group, "0")
@@ -53,14 +61,18 @@ pub async fn integration_test() -> anyhow::Result<()> {
     assert_eq!(pending.count(), 1);
 
     let claim_result = claim(&db_pool, Uuid::parse_str(&received.job_id)?).await?;
-    assert_eq!(claim_result, true);
+    assert!(claim_result);
 
     queue.ack(&received.message_id).await?;
 
     let pending: StreamPendingReply = redis_connection.xpending(&stream, group).await?;
     assert_eq!(pending.count(), 0);
 
-    sqlx::query("DELETE FROM jobs WHERE id = $1").bind(job_id_uuid).execute(&db_pool).await.ok();
+    sqlx::query("DELETE FROM jobs WHERE id = $1")
+        .bind(job_id_uuid)
+        .execute(&db_pool)
+        .await
+        .ok();
     let _: usize = redis_connection.del(&stream).await?;
 
     Ok(())
