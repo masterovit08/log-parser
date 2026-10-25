@@ -3,7 +3,7 @@ use job_model::Job;
 use sqlx::PgPool;
 use tracing::{error, info};
 use uuid::Uuid;
-use worker::claim;
+use worker::{claim, complete};
 
 pub async fn handle_job(db_pool: &PgPool, job_id: Uuid) -> Result<Option<Job>> {
     info!(%job_id, "Processing job");
@@ -13,7 +13,12 @@ pub async fn handle_job(db_pool: &PgPool, job_id: Uuid) -> Result<Option<Job>> {
         return Ok(None);
     };
 
-    info!(job_id = %job_id, "Job status has been successfully changed");
+    info!(job_id = %job_id, job_status = %job.status, "Job status has been successfully changed");
 
-    Ok(Some(job))
+    // reading from MinIO and parsing
+
+    let completed = complete(db_pool, job_id).await?;
+    info!(job_id = %job_id, "Job has been completed");
+
+    Ok(completed)
 }

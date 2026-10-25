@@ -3,7 +3,7 @@ use job_model::JobStatus;
 use redis::{AsyncCommands, streams::StreamPendingReply};
 use std::env;
 use uuid::Uuid;
-use worker::{RedisQueue, claim, connect};
+use worker::{RedisQueue, claim, complete, connect};
 
 #[tokio::test]
 #[ignore = "requires a running Redis and PostgreSQL nstance"]
@@ -73,6 +73,14 @@ pub async fn integration_test() -> anyhow::Result<()> {
 
     let second_claim = claim(&db_pool, received.job_id).await?;
     assert!(second_claim.is_none());
+
+    let completed = complete(&db_pool, received.job_id)
+        .await?
+        .context("job completion failed")?;
+    assert_eq!(completed.status, JobStatus::Completed);
+
+    let second_completed = complete(&db_pool, received.job_id).await?;
+    assert!(second_completed.is_none());
 
     queue.ack(&received.message_id).await?;
 
