@@ -2,4 +2,5 @@ pub mod db;
 pub mod queue;
 
 pub use db::{connect, jobs::claim};
-pub use queue::redis::{QueuedJob, RedisQueue};
+pub use job_model::QueuedJob;
+pub use queue::redis::RedisQueue;

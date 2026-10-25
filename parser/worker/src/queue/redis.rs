@@ -1,15 +1,12 @@
 use anyhow::{Context, Result};
+use job_model::QueuedJob;
 use redis::{
     AsyncCommands, AsyncConnectionConfig,
     aio::MultiplexedConnection,
     streams::{StreamReadOptions, StreamReadReply},
 };
 use std::time::Duration;
-
-pub struct QueuedJob {
-    pub message_id: String,
-    pub job_id: String,
-}
+use uuid::Uuid;
 
 pub struct RedisQueue {
     connection: MultiplexedConnection,
@@ -66,7 +63,7 @@ impl RedisQueue {
 
         Ok(Some(QueuedJob {
             message_id: message.id,
-            job_id,
+            job_id: Uuid::parse_str(&job_id)?,
         }))
     }
 

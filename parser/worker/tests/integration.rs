@@ -1,4 +1,5 @@
 use anyhow::Context;
+use job_model::JobStatus;
 use redis::{AsyncCommands, streams::StreamPendingReply};
 use std::env;
 use uuid::Uuid;
@@ -11,8 +12,8 @@ pub async fn integration_test() -> anyhow::Result<()> {
     let redis_url = env::var("REDIS_TEST_URL").context("REDIS_TEST_URL not set")?;
     let stream = format!("log-parser:test:{}", Uuid::now_v7());
     let group = "test-workers";
-    let job_id_uuid = Uuid::now_v7();
-    let job_id = job_id_uuid.to_string();
+    let job_id = Uuid::now_v7();
+    let job_id_str = job_id.to_string();
 
     let db_pool = connect(&db_url).await.context("failed to connect to db")?;
     let redis_client = redis::Client::open(redis_url.as_str())?;
@@ -40,7 +41,7 @@ pub async fn integration_test() -> anyhow::Result<()> {
     let test_minio_key = format!("raw-logs/{}.log", job_id);
 
     sqlx::query("INSERT INTO jobs (id, status, minio_key) VALUES ($1, $2, $3)")
-        .bind(job_id_uuid)
+        .bind(job_id)
         .bind("queued")
         .bind(&test_minio_key)
         .execute(&db_pool)
@@ -50,18 +51,28 @@ pub async fn integration_test() -> anyhow::Result<()> {
         .xgroup_create_mkstream(&stream, group, "0")
         .await?;
     let _: String = redis_connection
-        .xadd(&stream, "*", &[("job_id", job_id.as_str())])
+        .xadd(&stream, "*", &[("job_id", &job_id_str)])
         .await?;
     let mut queue = RedisQueue::connect_named(&redis_url, "test-worker", &stream, group).await?;
     let received = queue.next().await?.context("No job received")?;
 
-    assert_eq!(received.job_id, job_id);
+    assert_eq!(String::from(received.job_id), job_id_str);
 
     let pending: StreamPendingReply = redis_connection.xpending(&stream, group).await?;
     assert_eq!(pending.count(), 1);
 
-    let claim_result = claim(&db_pool, Uuid::parse_str(&received.job_id)?).await?;
-    assert!(claim_result);
+    let claimed_job = claim(&db_pool, received.job_id)
+        .await?
+        .context("job claim failed")?;
+
+    assert_eq!(claimed_job.id, job_id);
+    assert_eq!(claimed_job.status, JobStatus::Processing);
+    assert_eq!(claimed_job.minio_key, test_minio_key);
+    assert!(claimed_job.started_at.is_some());
+    assert!(claimed_job.finished_at.is_none());
+
+    let second_claim = claim(&db_pool, received.job_id).await?;
+    assert!(second_claim.is_none());
 
     queue.ack(&received.message_id).await?;
 
@@ -69,7 +80,7 @@ pub async fn integration_test() -> anyhow::Result<()> {
     assert_eq!(pending.count(), 0);
 
     sqlx::query("DELETE FROM jobs WHERE id = $1")
-        .bind(job_id_uuid)
+        .bind(job_id)
         .execute(&db_pool)
         .await
         .ok();

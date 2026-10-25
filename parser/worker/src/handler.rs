@@ -1,25 +1,19 @@
 use anyhow::Result;
+use job_model::Job;
 use sqlx::PgPool;
 use tracing::{error, info};
 use uuid::Uuid;
 use worker::claim;
 
-pub async fn handle_job(db_pool: &PgPool, job_id: Uuid) -> Result<()> {
+pub async fn handle_job(db_pool: &PgPool, job_id: Uuid) -> Result<Option<Job>> {
     info!(%job_id, "Processing job");
 
-    match claim(db_pool, job_id).await {
-        Ok(true) => {
-            info!(job_id = %job_id, "Job status has been successfully changed")
-        }
+    let Some(job) = claim(db_pool, job_id).await? else {
+        error!(job_id = %job_id, "Job has not been registered");
+        return Ok(None);
+    };
 
-        Ok(false) => {
-            error!(job_id = %job_id, "Job has not been registered");
-        }
+    info!(job_id = %job_id, "Job status has been successfully changed");
 
-        Err(_e) => {
-            error!(job_id = %job_id, "Failed to load job");
-        }
-    }
-
-    Ok(())
+    Ok(Some(job))
 }

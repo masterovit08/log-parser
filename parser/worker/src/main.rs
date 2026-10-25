@@ -1,8 +1,8 @@
 mod handler;
 
 use anyhow::{Context, Result};
+use handler::handle_job;
 use tracing::{error, info};
-use uuid::Uuid;
 use worker::{RedisQueue, connect};
 
 #[tokio::main]
@@ -25,23 +25,28 @@ async fn main() -> Result<()> {
     info!(worker = %worker_id, "Worker started");
 
     loop {
-        let Some(job) = queue.next().await? else {
+        let Some(job_message) = queue.next().await? else {
             continue;
         };
 
-        let job_id = job.job_id;
+        let job_id = job_message.job_id;
 
         info!(job_id = %job_id, "Job received");
 
-        match handler::handle_job(&db_pool, Uuid::parse_str(&job_id)?).await {
-            Ok(()) => {
-                queue.ack(&job.message_id).await?;
+        match handle_job(&db_pool, job_id).await {
+            Ok(Some(_job)) => {
+                queue.ack(&job_message.message_id).await?;
 
                 info!(job_id = %job_id, "Job acknowledged");
             }
 
-            Err(error) => {
-                error!(job_id = %job_id, %error, "Job failed");
+            Ok(None) => {
+                error!(job_id = %job_id, "Job was not found");
+                queue.ack(&job_message.message_id).await?;
+            }
+
+            Err(err) => {
+                error!(job_id = %job_id, error = %err, "Job failed");
             }
         }
     }
